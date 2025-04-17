@@ -64,13 +64,45 @@ class MockLLMProcessor(LLMProcessorInterface):
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
     ) -> Optional[str]:
-        # The Notion extension uses Anthropic directly, so this mock might not be hit often
-        # unless the base class or other parts use it.
-        log.warning("[Mock LLM Process] Called.")
-        # Raise the exception as per the user's previous edit if direct LLM use is unsupported here
-        raise Exception(
-            "Sorry, direct LLM processing via this mock is not supported in the local runner for Notion."
-        )
+        log.warning("[Mock LLM Process] Generating analysis...")
+        
+        return """
+Key Themes:
+- Major AI Infrastructure Advancements
+- Record-Breaking Financial Performance
+- Technical Performance Improvements
+
+Important Insights:
+1. AI Hardware Market
+   - NVIDIA dominates with 409% YoY growth in Data Center revenue ($18.4B)
+   - Demand still exceeds supply, indicating continued growth potential
+   - New superchips promise 2x performance improvement
+
+2. AI Model Capabilities
+   - Claude 3 shows significant improvements across all metrics
+   - 25% reduction in hallucinations indicates more reliable AI systems
+   - 200K token context window enables more complex applications
+
+Connections & Patterns:
+- Hardware-Software Co-evolution: NVIDIA's chip improvements align with Claude's increased capabilities
+- Market Validation: Strong financial performance (76.4% margins) suggests AI infrastructure investments are paying off
+- Competitive Dynamics: Both companies pushing boundaries in their respective domains
+
+Action Items:
+1. Technical Investigation
+   - Analyze implications of 200K token context for enterprise applications
+   - Evaluate new NVIDIA superchips for AI infrastructure planning
+
+2. Market Strategy
+   - Monitor AI chip supply constraints and pricing trends
+   - Track real-world performance of Claude 3 vs. benchmarks
+   - Consider implications of improved hallucination rates for critical applications
+
+3. Investment Considerations
+   - NVIDIA's margins suggest room for new market entrants
+   - Infrastructure scaling will be critical for AI deployment
+   - Multi-modal AI capabilities may open new market segments
+"""
 
 
 # a complete mock context for on_copy
@@ -83,13 +115,45 @@ def get_mock_copy_context():
         "window_info": {
             "bundleIdentifier": "com.google.Chrome",
             "appName": "Google Chrome",
-            "windowTitle": "Example Do∫main",
+            "windowTitle": "Anthropic releases Claude 3 Opus",
             "windowOwner": "Google Chrome",
-            "accessibilityData": {"browser_url": "https://example.com"},
+            "accessibilityData": {"browser_url": "https://www.anthropic.com/news/claude-3"},
         },
         "screenshot_provided": True,
         "screenshot_data": b"simulated_screenshot_bytes",
-        "selected_text": f"selected text sample for on_copy",
+        "selected_text": """Claude 3 Opus achieves state-of-the-art performance across key benchmarks:
+- 99th percentile on AP Biology exam
+- 95% accuracy on mathematical reasoning
+- 94% success rate on coding challenges
+- Processes 200K tokens of context
+- Reduced hallucination rate by 25% compared to previous version
+- New multimodal capabilities with advanced vision understanding""",
+        "dependencies": {},
+    }
+
+
+def get_mock_copy_context2():
+    return {
+        "device_id": "test_device_123",
+        "request_id": "req_copy_def",
+        "session_id": "session-test-123",
+        "timestamp": "2025-04-16T06:15:26.128251",
+        "window_info": {
+            "bundleIdentifier": "com.google.Chrome",
+            "appName": "Google Chrome",
+            "windowTitle": "NVIDIA Q4 2024 Earnings",
+            "windowOwner": "Google Chrome",
+            "accessibilityData": {"browser_url": "https://investor.nvidia.com/news"},
+        },
+        "screenshot_provided": True,
+        "screenshot_data": b"simulated_screenshot_bytes",
+        "selected_text": """NVIDIA announces record Q4 results:
+- Revenue: $22.1B (up 265% YoY)
+- Data Center revenue: $18.4B (up 409%)
+- Gaming revenue: $2.9B (up 56%)
+- Gross margin increased to 76.4%
+- AI chip demand continues to outstrip supply
+- Announced new AI superchips with 2x performance""",
         "dependencies": {},
     }
 
@@ -154,17 +218,27 @@ async def main(
     # --- Call Extension Methods based on action ---
     if action in ["copy", "all"]:
         log.info(f"\n--- Testing {extension_name}.on_copy ---")
+        
+        # First copy
         copy_context = get_mock_copy_context()
         copy_context["dependencies"] = dependencies
         try:
             copy_response = await extension.on_copy(copy_context)
-            log.info(f"on_copy response: {copy_response}")
+            log.info(f"on_copy response 1: {copy_response}")
+            await asyncio.sleep(2)  # Short wait between copies
+        except Exception as e:
+            log.error(f"Error during first copy: {e}", exc_info=True)
+
+        # Second copy
+        copy_context2 = get_mock_copy_context2()
+        copy_context2["dependencies"] = dependencies
+        try:
+            copy_response2 = await extension.on_copy(copy_context2)
+            log.info(f"on_copy response 2: {copy_response2}")
             log.info("Waiting for background tasks (may involve network calls)...")
             await asyncio.sleep(wait_time_seconds)
         except Exception as e:
-            log.error(
-                f"Error during on_copy or its background task: {e}", exc_info=True
-            )
+            log.error(f"Error during second copy: {e}", exc_info=True)
 
     if action in ["paste", "all"]:
         log.info(f"\n--- Testing {extension_name}.on_paste ---")
@@ -208,7 +282,7 @@ async def main(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Run local tests for NotionMCPExtension."
+        description="Run local tests for SampleExtension."
     )
     parser.add_argument(
         "action",
@@ -216,26 +290,37 @@ if __name__ == "__main__":
         help="Specify which action to test: 'copy', 'paste', 'context', or 'all'.",
     )
     args = parser.parse_args()
-    # Using the hardcoded values from the previous version for now:
+    
+    # Set up dependencies for testing
     dependencies = {
-        EXTENSION_DEPENDENCIES.notion_mcp_url.name: os.getenv("NOTION_MCP_URL"),
-        EXTENSION_DEPENDENCIES.anthropic_api_key.name: os.getenv("ANTHROPIC_API_KEY"),
+        EXTENSION_DEPENDENCIES.daily_digest_storage_path.name: "/tmp/daily_digest",
+        EXTENSION_DEPENDENCIES.daily_digest_prompt.name: """
+        You are an expert content curator and analyst for a venture capital firm called True Ventures. 
+        True is interested in understanding the latest trends in the tech industry and are highly technical and incredibly sharp.
+        We have very little time to read long-form content, so need highly distilled and information-dense and ideally quantitative information.
+        No fluff, no abstract bullshit, all hard data and actionable insights.
+        For the content collected today:
+        1. Summarize the content in a way that is easy to understand and actionable for us.
+        2. Extract key insights and learnings
+        3. Note interesting connections between different pieces
+        4. Suggest potential actions or follow-ups
+        5. Highlight any emerging trends or patterns
+        
+        Format your response in a clear, succinct way with sections for:
+        - Key Themes
+        - Important Insights
+        - Connections & Patterns
+        - Action Items
+        """,
+        EXTENSION_DEPENDENCIES.anthropic_api_key.name: "dummy_key"  # Mock key for testing
     }
 
-    # Check if required dependencies are present
-    if not dependencies.get(
-        EXTENSION_DEPENDENCIES.notion_mcp_url.name
-    ) or not dependencies.get(EXTENSION_DEPENDENCIES.anthropic_api_key.name):
-        log.error("Missing required dependencies: mcp_url or anthropic_api_key")
-        sys.exit(1)
-
     # Run the main async function
-    # Pass the action and loaded dependencies
-    from extensions.notion_mcp_extension.notion_mcp_extension import NotionMCPExtension
+    from extensions.daily_digest_extension.daily_digest_extension import DailyDigestExtension
 
     asyncio.run(
         main(
-            NotionMCPExtension,
+            DailyDigestExtension,
             args.action,
             dependencies=dependencies,
             wait_time_seconds=20,

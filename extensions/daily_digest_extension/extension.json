@@ -1,0 +1,25 @@
+{
+    "name": "Daily Digest",
+    "version": "1.0.0",
+    "description": "AI-powered content curator that helps you collect and analyze interesting content throughout your day",
+    "author": "TabTabTab Community",
+    "main": "daily_digest_extension.py",
+    "dependencies": {
+        "python": ["beautifulsoup4", "aiohttp"],
+        "env": {
+            "ANTHROPIC_API_KEY": "Anthropic API key for Claude 3",
+            "DAILY_DIGEST_STORAGE_PATH": "Path to store daily digests",
+            "DAILY_DIGEST_PROMPT": "Custom prompt for content analysis"
+        }
+    },
+    "commands": {
+        "copy": {
+            "description": "Save selected content to daily digest",
+            "shortcut": "Option+C"
+        },
+        "paste": {
+            "description": "Generate analysis of today's collected content",
+            "shortcut": "Option+V"
+        }
+    }
+} 
