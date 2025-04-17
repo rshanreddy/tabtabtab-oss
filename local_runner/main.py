@@ -282,7 +282,7 @@ async def main(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Run local tests for SampleExtension."
+        description="Run local tests for NotionMCPExtension."
     )
     parser.add_argument(
         "action",
@@ -290,37 +290,26 @@ if __name__ == "__main__":
         help="Specify which action to test: 'copy', 'paste', 'context', or 'all'.",
     )
     args = parser.parse_args()
-    
-    # Set up dependencies for testing
+    # Using the hardcoded values from the previous version for now:
     dependencies = {
-        EXTENSION_DEPENDENCIES.daily_digest_storage_path.name: "/tmp/daily_digest",
-        EXTENSION_DEPENDENCIES.daily_digest_prompt.name: """
-        You are an expert content curator and analyst for a venture capital firm called True Ventures. 
-        True is interested in understanding the latest trends in the tech industry and are highly technical and incredibly sharp.
-        We have very little time to read long-form content, so need highly distilled and information-dense and ideally quantitative information.
-        No fluff, no abstract bullshit, all hard data and actionable insights.
-        For the content collected today:
-        1. Summarize the content in a way that is easy to understand and actionable for us.
-        2. Extract key insights and learnings
-        3. Note interesting connections between different pieces
-        4. Suggest potential actions or follow-ups
-        5. Highlight any emerging trends or patterns
-        
-        Format your response in a clear, succinct way with sections for:
-        - Key Themes
-        - Important Insights
-        - Connections & Patterns
-        - Action Items
-        """,
-        EXTENSION_DEPENDENCIES.anthropic_api_key.name: "dummy_key"  # Mock key for testing
+        EXTENSION_DEPENDENCIES.notion_mcp_url.name: os.getenv("NOTION_MCP_URL"),
+        EXTENSION_DEPENDENCIES.anthropic_api_key.name: os.getenv("ANTHROPIC_API_KEY"),
     }
 
+    # Check if required dependencies are present
+    if not dependencies.get(
+        EXTENSION_DEPENDENCIES.notion_mcp_url.name
+    ) or not dependencies.get(EXTENSION_DEPENDENCIES.anthropic_api_key.name):
+        log.error("Missing required dependencies: mcp_url or anthropic_api_key")
+        sys.exit(1)
+
     # Run the main async function
-    from extensions.daily_digest_extension.daily_digest_extension import DailyDigestExtension
+    # Pass the action and loaded dependencies
+    from extensions.notion_mcp_extension.notion_mcp_extension import NotionMCPExtension
 
     asyncio.run(
         main(
-            DailyDigestExtension,
+            NotionMCPExtension,
             args.action,
             dependencies=dependencies,
             wait_time_seconds=20,

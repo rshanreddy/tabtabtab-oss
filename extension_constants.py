@@ -28,5 +28,3 @@ class EXTENSION_ID(BaseExtensionID):
     notion_mcp_extension = auto()
     calendar_mcp_extension = auto()
     sample_context_extension = auto()
-    text_formatter_extension = auto()
-    daily_digest_extension = auto()  # Our new extension

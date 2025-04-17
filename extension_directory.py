@@ -9,9 +9,8 @@ from extensions.notion_mcp_extension.notion_mcp_extension import NotionMCPExtens
 from extensions.calendar_mcp_extension.calendar_mcp_extension import (
     CalendarMCPExtension,
 )
-from extensions.text_formatter_extension.text_formatter_extension import TextFormatterExtension
-from extensions.daily_digest_extension.daily_digest_extension import DailyDigestExtension
 from extension_constants import EXTENSION_DEPENDENCIES, EXTENSION_ID
+from extensions.translation_extension.translation_extension import TranslationExtension
 
 
 EXTENSION_DIRECTORY = [
@@ -45,21 +44,5 @@ EXTENSION_DIRECTORY = [
             EXTENSION_DEPENDENCIES.my_location,
         ],
         extension_class=CalendarMCPExtension,
-    ),
-    ExtensionDescriptor(
-        extension_id=EXTENSION_ID.text_formatter_extension,
-        description="Text formatter extension that cleans and formats text during copy/paste operations.",
-        dependencies=[],
-        extension_class=TextFormatterExtension,
-    ),
-    ExtensionDescriptor(
-        extension_id=EXTENSION_ID.daily_digest_extension,
-        description="Collects and analyzes content you copy throughout the day, generating AI-powered insights and summaries.",
-        dependencies=[
-            EXTENSION_DEPENDENCIES.anthropic_api_key,
-            EXTENSION_DEPENDENCIES.daily_digest_prompt,
-            EXTENSION_DEPENDENCIES.daily_digest_storage_path,
-        ],
-        extension_class=DailyDigestExtension,
     ),
 ]
